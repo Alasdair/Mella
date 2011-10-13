@@ -73,6 +73,7 @@ waldmeister axioms' signature time kbo conclusion@(Id ty t1 t2) = do
     let cmd = "/usr/local/bin/waldmeister"
         args = ["--details", "/tmp/proof.pr"]
 
+    -- The code to run the waldmeister process is adapted from the base GHC libraries.
     (Just inh, Just outh, Just errh, pid) <- liftIO $ createProcess (proc cmd args) { std_in  = CreatePipe
                                                                                     , std_out = CreatePipe
                                                                                     , std_err = CreatePipe
@@ -532,7 +533,7 @@ rcTypedExpr expr = do
 
 rcExprTerm :: Expr -> Term
 rcExprTerm (Var n) = Named n
-rcExprTerm (Cnst _) = Named "CONSTANT"
+rcExprTerm (Cnst _) = Named "CONSTANT" -- This should cause the type checker to fail.
 rcExprTerm (Con n exprs) =
     foldl App (Unnamed (DB n "!")) $ map rcExprTerm exprs
 
