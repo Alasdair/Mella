@@ -22,13 +22,16 @@ import Data.Text (Text)
 import qualified Data.Text as T
 import qualified Data.Text.IO as T
 
+import System.FilePath
+import System.Directory
+
 import System.Exit (exitSuccess)
 
 baseCommands :: Map Text CommandImpl
 baseCommands = commandsFromList $
     [ implUndo, implDefer, implInfer, implDescribe, implQuit
     , implDefined, implForget, implQed, implIntro, implNormalize
-    , implHelp, implCommands
+    , implHelp, implCommands, implAgda
     ]
 
 implUndo :: CommandImpl
@@ -85,6 +88,48 @@ implDescribe = Impl { implName = "describe"
                     , implFun  = describe
                     , implDoc  = "Display the implementation and type of an identifer"
                     }
+
+preludeSyms :: [Text]
+preludeSyms = ["sym", "trans", "cong", "subst", "Assoc", "Comm", "Refl", "Identity", "const", "id", "J"]
+
+agdaPrint :: FilePath -> Text -> TopLevel ()
+agdaPrint path ident = do
+    ctx <- getCtx
+    sch <- getColorScheme
+
+    case Map.lookup ident (named ctx) of
+      Nothing -> errorMsg (T.append ident " is not defined")
+      Just (t, ty) -> liftIO $ do
+          T.appendFile path $ withColor sch namedColor ident
+          T.appendFile path " : "
+          T.appendFile path $ pretty sch ty
+          T.appendFile path "\n"
+
+          T.appendFile path $ withColor sch namedColor ident
+          T.appendFile path " = "
+          T.appendFile path $ pretty sch t
+          T.appendFile path "\n\n"
+
+agda :: [Expr] -> Opts -> TopLevel ()
+agda [(ExprString path)] _ = do
+    (Ctx _ fs) <- getCtx
+    dir <- liftIO $ getAppUserDataDirectory "proveit"
+    prelude <- liftIO . T.readFile $ dir </> "ProveIt.agda"
+
+    let path' = T.unpack path ++ ".agda"
+
+    liftIO $ T.writeFile path' (T.concat ["module ", T.pack (takeFileName (T.unpack path)), " where\n\n"])
+    liftIO $ T.appendFile path' prelude
+
+    mapM_ (agdaPrint path') $ (Map.keys fs \\ preludeSyms)
+
+agda _ _ = errorMsg "Invalid args to agda command"
+
+implAgda :: CommandImpl
+implAgda = Impl { implName = "agda"
+                , implFun  = agda
+                , implDoc  = "Export to an agda file"
+                }
 
 implQuit :: CommandImpl
 implQuit = Impl { implName = "quit"
