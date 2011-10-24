@@ -25,21 +25,32 @@ flags = [ Option ['p'] ["proof-general"] (NoArg ProofGeneral)
         ]
 
 preludeOnline :: String
-preludeOnline = "https://raw.github.com/gist/1211182/289c2330ed10c6f57f36901b3eb08e442afa2de8/prelude.prv"
+preludeOnline = "http://staffwww.dcs.shef.ac.uk/people/A.Armstrong/prelude.prv"
+
+agdaPreludeOnline :: String
+agdaPreludeOnline = "http://staffwww.dcs.shef.ac.uk/people/A.Armstrong/ProveIt.agda"
 
 main :: IO ()
 main = do
     args <- getArgs
     dir <- getAppUserDataDirectory "proveit"
     let preludePath = dir </> "prelude.prv"
+    let agdaPreludePath = dir </> "ProveIt.agda"
 
     preludeExist <- doesFileExist preludePath
+    agdaPreludeExist <- doesFileExist agdaPreludePath
 
     when (not preludeExist) $ do
       createDirectoryIfMissing True dir
       putStrLn ("reading prelude from: " ++ preludeOnline)
       prelude <- wget preludeOnline [] []
       writeFile preludePath prelude
+
+    when (not agdaPreludeExist) $ do
+      createDirectoryIfMissing True dir
+      putStrLn ("reading agda prelude from: " ++ agdaPreludeOnline)
+      prelude <- wget agdaPreludeOnline [] []
+      writeFile agdaPreludePath prelude
 
     let (setFlags, _, _) = getOpt Permute flags args
         state = if ProofGeneral `elem` setFlags
