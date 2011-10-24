@@ -1,4 +1,4 @@
-{-# LANGUAGE OverloadedStrings, PatternGuards, GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE OverloadedStrings, GeneralizedNewtypeDeriving #-}
 
 module Lang.TopLevel where
 
@@ -37,12 +37,12 @@ main = do
 
 loop :: TopLevel ()
 loop = do
-    prompt <- maybe "λ" (\t -> T.append t " λ") . fmap fst . tlCurrentTheorem <$> getState
+    prompt <- maybe "λ" (`T.append` " λ") . fmap fst . tlCurrentTheorem <$> getState
     (Counter n) <- getCounter
     let prompt' = "PROVEIT" -- T.append (T.pack (show n ++ " ")) prompt
     sch <- getColorScheme
     command <- getText sch prompt'
-    when (command == "") $ loop
+    when (command == "") loop
     checkpoint command
     result <- recover $ case parseCommand =<< tokenize command of
       Just command' -> runCommand command'
@@ -53,7 +53,7 @@ loop = do
     metas <- tlMetas <$> getState
     solved <- getSolvedMetas
     theorem <- getCurrentTheorem
-    when (not (null metas)) $ do
+    unless (null metas) $ do
         colorBanner okColor "GOALS"
         mapM_  (\(n, meta) -> putStr (T.pack (show n)) >> putStr ": " >> prettyPrint meta) (zip [1..] metas)
     when (null metas && isJust theorem) $ do

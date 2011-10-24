@@ -3,16 +3,12 @@ module Lang.Interactive where
 
 import Control.Applicative
 import Control.Monad.IO.Class
-
+import Control.Monad.Trans.Class
 
 import Data.Attoparsec.Text as Atto
 import Data.Text (Text)
 import qualified Data.Text as T
 import qualified Data.Text.IO as T
-
-import Control.Monad.Trans.Class
-
-import qualified Data.Text as T
 
 import System.Console.Haskeline
 

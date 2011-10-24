@@ -106,7 +106,7 @@ nf ctx (J a b c d e f)    = return $ App c d
 nf ctx (Id ty t1 t2)      = liftA3 Id (nf ctx ty) (nf ctx t1) (nf ctx t2)
 nf ctx (Ann t ty)         = nf ctx t
 nf ctx (Rewrite dir eq t) = liftA2 (Rewrite dir) (nf ctx eq) (nf ctx t)
-nf ctx (Named name)       = nf ctx =<< (maybe (Left name) Right $ fst <$> OMap.lookup name (named ctx))
+nf ctx (Named name)       = nf ctx =<< maybe (Left name) Right (fst <$> OMap.lookup name (named ctx))
 nf ctx (Lam tag t)        = Lam tag <$> nf ctx t
 nf ctx (Pi tag s t)       = liftA2 (Pi tag) (nf ctx s) (nf ctx t)
 nf ctx t                  = case betaReduce ctx t of
@@ -235,6 +235,7 @@ data Ctx = Ctx { unnamed :: [(Tag, Term)]
                , named :: OMap Text (Term, Term)
                } deriving (Show)
 
+emptyCtx :: Ctx
 emptyCtx = Ctx [] OMap.empty
 
 -- Pretty Printing Terms
@@ -289,7 +290,7 @@ instance PrettyPrint Term where
                                           , prettyBracket sch d, " ", prettyBracket sch e, " ", prettyBracket sch f
                                           ]
     pretty sch Refl = withColor sch keywordColor "refl"
-    pretty sch (Meta n) = withColor sch keywordColor (T.pack ("?" ++ show n))
+    pretty sch (Meta n) = withColor sch keywordColor (T.pack ('?' : show n))
 
     prettyBracket sch (Named v) = pretty sch (Named v)
     prettyBracket sch (Unnamed n) = pretty sch (Unnamed n)

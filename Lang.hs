@@ -20,7 +20,8 @@ import Network.HTTP.Wget
 
 data Flag = ProofGeneral deriving (Eq)
 
-flags = [ Option ['p'] ["proof-general"] (NoArg ProofGeneral)
+flags :: [OptDescr Flag]
+flags = [ Option "p" ["proof-general"] (NoArg ProofGeneral)
             "Disable coloured output and enable special proof general commands."
         ]
 
@@ -40,13 +41,13 @@ main = do
     preludeExist <- doesFileExist preludePath
     agdaPreludeExist <- doesFileExist agdaPreludePath
 
-    when (not preludeExist) $ do
+    unless preludeExist $ do
       createDirectoryIfMissing True dir
       putStrLn ("Reading prelude from: " ++ preludeOnline)
       prelude <- wget preludeOnline [] []
       writeFile preludePath prelude
 
-    when (not agdaPreludeExist) $ do
+    unless agdaPreludeExist $ do
       createDirectoryIfMissing True dir
       putStrLn ("Reading agda prelude from: " ++ agdaPreludeOnline)
       prelude <- wget agdaPreludeOnline [] []
@@ -61,5 +62,5 @@ main = do
                 else defaultState { tlCommandImpls = standardCommands
                                   , tlPrelude = preludePath
                                   }
-    runTopLevel TL.main state
+    _ <- runTopLevel TL.main state
     return ()

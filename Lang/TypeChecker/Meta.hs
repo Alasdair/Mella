@@ -9,7 +9,7 @@ metaMeta :: (Functor m, Monad m) => Term -> Term -> TCMT m Bool
 metaMeta (Meta n) ty = do
     validType ty
     state <- get
-    put $ state { tcmMetas = MC (tcmCtx state) n ty : (tcmMetas state) }
+    put $ state { tcmMetas = MC (tcmCtx state) n ty : tcmMetas state }
     return True
 
 metaMeta _ _ = return False

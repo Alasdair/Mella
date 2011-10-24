@@ -234,6 +234,7 @@ implIntro = Impl { implName = "intro"
                  }
 
 normalize :: [Expr] -> Opts -> TopLevel ()
+normalize _ _ = return ()
 normalize [ExprIdent ident] _ = do
     ctx <- getCtx
     normalForm <- tlnf ctx (Named ident)

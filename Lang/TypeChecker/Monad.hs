@@ -106,15 +106,12 @@ typecheck :: (Functor m, Monad m) => Term -> Term -> TCMT m (Maybe Text)
 typecheck t1 t2 = do
     tRules <- tcmTCRules <$> get
     depth (+ 1)
-    r <- foldM tryRule Nothing tRules
-    return r
+    foldM tryRule Nothing tRules
   where
     tryRule (Just name) _ = return (Just name)
     tryRule Nothing (TCR name rule) = do
         r <- rule t1 t2
-        case r of
-          True -> return (Just name)
-          False -> return Nothing
+        return $ if r then Just name else Nothing
 
 
 data IRule m = IR { inferRuleName :: Text
@@ -146,7 +143,7 @@ validType t | inf t = do
       (Sort n) -> return n
       otherwise -> __ERROR__ "validType" [("t", t)] "{t}\nis an invalid type"
 validType t = do
-    t `hasType` (Sort Star)
+    t `hasType` Sort Star
     return Star
 
 runTCMT :: Monad m => TCMState m -> TCMT m a -> m (Either TypeError a, TCMState m)
@@ -235,7 +232,7 @@ withSubstCtx i t action = do
 
 data TypeError = TypeError
     { errDesc :: Text
-    , errTerms :: (Map Text Term)
+    , errTerms :: Map Text Term
     , errCtx :: Ctx
     , errFunction :: Text
     , errFile :: String
@@ -246,14 +243,14 @@ typeError :: (Functor m, Monad m)
           => String -> Integer -- ^ should be supplied with CPP
           -> Text -> [(Text, Term)] -> Text -> TCMT m a
 typeError file line fun terms desc = TCMT $ do
-    ctx <- unTCMT $ getCtx
-    err $ TypeError { errDesc = desc
-                    , errTerms = Map.fromList terms
-                    , errFunction = fun
-                    , errCtx = ctx
-                    , errFile = file
-                    , errLine = line
-                    }
+    ctx <- unTCMT getCtx
+    err TypeError { errDesc = desc
+                  , errTerms = Map.fromList terms
+                  , errFunction = fun
+                  , errCtx = ctx
+                  , errFile = file
+                  , errLine = line
+                  }
 
 instance PrettyPrint TypeError where
     pretty sch terr =

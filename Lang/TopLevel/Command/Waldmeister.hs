@@ -44,7 +44,7 @@ waldmeister _ opts = do
     metas <- getMetas
     case metas of
       [] -> errorMsg "No metas to solve using waldmeister!"
-      (MC ctx n ty) : _ -> do
+      MC ctx n ty : _ -> do
           signature <- mapM (parseTerm ctx <=< identToText) =<< optLookup "signature" opts
           axioms    <- mapM (parseTerm ctx <=< identToText) =<< optLookup "axioms" opts
           timeout   <- fmap (read . T.unpack) $ identToText =<< firstOpt =<< optLookupDefault [(ExprIdent "5")] "timeout" opts
@@ -62,10 +62,10 @@ waldmeister _ opts = do
             (Left err, False) -> formatTypeError err (tcmLog tcmState')
             (Right (Tactic.WMError _), True)  -> incScriptVar "wstats-error" >> sorry
             (Right (Tactic.WMError n), False)  -> errorMsg (T.append "waldmeister failed with code " (T.pack (show n)))
-            (Right (Tactic.WMTimeout), True)  -> incScriptVar "wstats-timeouts" >> sorry
-            (Right (Tactic.WMTimeout), False) -> errorMsg "waldmeister timed out"
-            (Right (Tactic.WMRefuted), True)  -> incScriptVar "wstats-refutes" >> sorry
-            (Right (Tactic.WMRefuted), False) -> errorMsg "waldmeister refuted the goal"
+            (Right Tactic.WMTimeout, True)  -> incScriptVar "wstats-timeouts" >> sorry
+            (Right Tactic.WMTimeout, False) -> errorMsg "waldmeister timed out"
+            (Right Tactic.WMRefuted, True)  -> incScriptVar "wstats-refutes" >> sorry
+            (Right Tactic.WMRefuted, False) -> errorMsg "waldmeister refuted the goal"
             (Right (Tactic.WMTerm solution startTime waldmeisterTime), _) -> do
                 let (Ctx _ lemmaCtx) = tcmCtx tcmState'
                     -- Inefficient, now we are using ordered maps.
