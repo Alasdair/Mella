@@ -42,13 +42,13 @@ main = do
 
     when (not preludeExist) $ do
       createDirectoryIfMissing True dir
-      putStrLn ("reading prelude from: " ++ preludeOnline)
+      putStrLn ("Reading prelude from: " ++ preludeOnline)
       prelude <- wget preludeOnline [] []
       writeFile preludePath prelude
 
     when (not agdaPreludeExist) $ do
       createDirectoryIfMissing True dir
-      putStrLn ("reading agda prelude from: " ++ agdaPreludeOnline)
+      putStrLn ("Reading agda prelude from: " ++ agdaPreludeOnline)
       prelude <- wget agdaPreludeOnline [] []
       writeFile agdaPreludePath prelude
 
