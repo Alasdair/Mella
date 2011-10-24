@@ -64,6 +64,8 @@ import qualified Data.Text.IO as T
 
 import System.Exit
 
+import Lang.Util.OMap (OMap)
+import qualified Lang.Util.OMap as OMap
 import Lang.Util.Counter
 import Lang.Util.UndoStateT
 
@@ -301,23 +303,23 @@ modifyCtx change undo = modifyState (modifyCtx' change) (modifyCtx' undo)
   where
     modifyCtx' f state = state { tlCtx = f (tlCtx state) }
 
-withNamed :: (Map Text (Term, Term) -> Map Text (Term, Term)) -> Ctx -> Ctx
+withNamed :: (OMap Text (Term, Term) -> OMap Text (Term, Term)) -> Ctx -> Ctx
 withNamed f (Ctx u n) = Ctx u (f n)
 
 addNamedVar :: Text -> Term -> Term -> TopLevel ()
 addNamedVar name t ty = do
     (Ctx _ named) <- getCtx
-    if (Map.member name named)
+    if (OMap.member name named)
     then errorMsg (T.append name " is already defined")
-    else modifyCtx (withNamed (Map.insert name (t, ty))) (withNamed (Map.delete name))
+    else modifyCtx (withNamed (OMap.insert name (t, ty))) (withNamed (OMap.delete name))
 
 removeNamedVar :: Text -> TopLevel ()
 removeNamedVar name = do
     (Ctx _ named) <- getCtx
-    case Map.lookup name named of
+    case OMap.lookup name named of
       Nothing -> errorMsg (T.append name " is not defined")
       Just (t, ty) ->
-          modifyCtx (withNamed (Map.delete name)) (withNamed (Map.insert name (t, ty)))
+          modifyCtx (withNamed (OMap.delete name)) (withNamed (OMap.insert name (t, ty)))
 
 modifyScriptVars :: (Map Text Text -> Map Text Text) -> (Map Text Text -> Map Text Text) -> TopLevel ()
 modifyScriptVars change undo = modifyState (modifyTV change) (modifyTV undo)

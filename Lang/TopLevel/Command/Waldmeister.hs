@@ -17,6 +17,9 @@ import qualified Data.Text.IO as T
 
 import System.Timeout
 
+import Lang.Util.OMap (OMap)
+import qualified Lang.Util.OMap as OMap
+
 import Lang.Term
 import Lang.TopLevel.Monad
 import Lang.TopLevel.Parser
@@ -65,7 +68,8 @@ waldmeister _ opts = do
             (Right (Tactic.WMRefuted), False) -> errorMsg "waldmeister refuted the goal"
             (Right (Tactic.WMTerm solution startTime waldmeisterTime), _) -> do
                 let (Ctx _ lemmaCtx) = tcmCtx tcmState'
-                    lemmas = Map.toList $ Map.difference lemmaCtx (named ctx)
+                    -- Inefficient, now we are using ordered maps.
+                    lemmas = Map.toList $ Map.difference (OMap.toMap lemmaCtx) (OMap.toMap (named ctx))
 
                 forM_ lemmas $ \(name, (t, ty)) -> do
                     ctx <- getCtx

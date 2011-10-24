@@ -14,6 +14,9 @@ import qualified Data.Text as T
 import qualified Data.Text.IO as T
 
 import Lang.Util.Counter
+import Lang.Util.OMap (OMap)
+import qualified Lang.Util.OMap as OMap
+
 import Lang.PrettyPrint
 
 -- | 'Index' is a datatype representing DeBruijn indices. It has
@@ -103,7 +106,7 @@ nf ctx (J a b c d e f)    = return $ App c d
 nf ctx (Id ty t1 t2)      = liftA3 Id (nf ctx ty) (nf ctx t1) (nf ctx t2)
 nf ctx (Ann t ty)         = nf ctx t
 nf ctx (Rewrite dir eq t) = liftA2 (Rewrite dir) (nf ctx eq) (nf ctx t)
-nf ctx (Named name)       = nf ctx =<< (maybe (Left name) Right $ fst <$> Map.lookup name (named ctx))
+nf ctx (Named name)       = nf ctx =<< (maybe (Left name) Right $ fst <$> OMap.lookup name (named ctx))
 nf ctx (Lam tag t)        = Lam tag <$> nf ctx t
 nf ctx (Pi tag s t)       = liftA2 (Pi tag) (nf ctx s) (nf ctx t)
 nf ctx t                  = case betaReduce ctx t of
@@ -229,10 +232,10 @@ lamBinders ts = assignVars emptyCtx . flip (foldr Lam) (map Tag ts) . shift arit
     where arity = length ts
 
 data Ctx = Ctx { unnamed :: [(Tag, Term)]
-               , named :: Map Text (Term, Term)
+               , named :: OMap Text (Term, Term)
                } deriving (Show)
 
-emptyCtx = Ctx [] Map.empty
+emptyCtx = Ctx [] OMap.empty
 
 -- Pretty Printing Terms
 instance PrettyPrint Index where

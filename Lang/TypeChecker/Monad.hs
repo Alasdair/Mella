@@ -20,6 +20,8 @@ import qualified Data.Text as T
 
 import Lang.Util.Counter
 import Lang.Util.EitherT
+import Lang.Util.OMap (OMap)
+import qualified Lang.Util.OMap as OMap
 
 import Lang.Error
 import Lang.PrettyPrint
@@ -170,7 +172,7 @@ putCtx ctx = do
     put $ tcmState {tcmCtx = ctx}
 
 addNamedVar :: Text -> Term -> Term -> Ctx -> Ctx
-addNamedVar name term ty (Ctx bs fs) = Ctx bs $ Map.insert name (term, ty) fs
+addNamedVar name term ty (Ctx bs fs) = Ctx bs $ OMap.insert name (term, ty) fs
 
 getUnnamedVar :: (Functor m, Monad m) => Int -> TCMT m Term
 getUnnamedVar n = do
@@ -199,7 +201,7 @@ getUnnamedVarByType ty = do
 getNamedVar :: (Functor m, Monad m) => Text -> TCMT m (Term, Term)
 getNamedVar name = do
     (Ctx _ fs) <-  getCtx
-    case Map.lookup name fs of
+    case OMap.lookup name fs of
       Nothing -> __ERROR__ "getNamedVar" [] (T.concat ["variable ", name, " not defined"])
       Just t  -> return t
 

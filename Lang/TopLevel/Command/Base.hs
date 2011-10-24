@@ -3,6 +3,8 @@ module Lang.TopLevel.Command.Base (baseCommands) where
 
 import Prelude hiding (putStrLn, putChar, putStr)
 
+import Lang.Util.OMap (OMap)
+import qualified Lang.Util.OMap as OMap
 import Lang.Util.UndoStateT
 import Lang.Term
 import Lang.PrettyPrint hiding (prettyPrint)
@@ -72,7 +74,7 @@ describe [(ExprIdent ident)] _ = do
     ctx <- getCtx
     sch <- getColorScheme
 
-    case Map.lookup ident (named ctx) of
+    case OMap.lookup ident (named ctx) of
       Nothing -> errorMsg (T.append ident " is not defined")
       Just (t, ty) -> do
           putStr $ withColor sch namedColor ident
@@ -97,7 +99,7 @@ agdaPrint path ident = do
     ctx <- getCtx
     sch <- getColorScheme
 
-    case Map.lookup ident (named ctx) of
+    case OMap.lookup ident (named ctx) of
       Nothing -> errorMsg (T.append ident " is not defined")
       Just (t, ty) -> liftIO $ do
           T.appendFile path $ withColor sch namedColor ident
@@ -121,7 +123,7 @@ agda [(ExprString path)] _ = do
     liftIO $ T.writeFile path' (T.concat ["module ", T.pack (takeFileName (T.unpack path)), " where\n\n"])
     liftIO $ T.appendFile path' prelude
 
-    mapM_ (agdaPrint path') $ (Map.keys fs \\ preludeSyms)
+    mapM_ (agdaPrint path') $ (OMap.orderedKeys fs \\ preludeSyms)
 
 agda _ _ = errorMsg "Invalid args to agda command"
 
@@ -142,7 +144,7 @@ defined [(ExprIdent name)] _ = do
     ctx <- getCtx
     sch <- getColorScheme
     putStrLn $
-        if Map.member name (named ctx)
+        if OMap.member name (named ctx)
         then withColor sch okColor "YES"
         else withColor sch errorColor "NO"
 
@@ -151,7 +153,7 @@ defined _ opts = do
     ctx <- getCtx
     let breakChar = if Map.member "long" opts then '\n' else ' '
     putStr . namedColor $ tlColorScheme state
-    mapM_ (\name -> putStr name >> putChar breakChar) $ Map.keys (named ctx)
+    mapM_ (\name -> putStr name >> putChar breakChar) $ OMap.keys (named ctx)
     putStr sgrReset
     when (breakChar == ' ') $ putChar '\n'
 

@@ -27,6 +27,9 @@ import System.Random
 import System.IO
 import System.Exit
 
+import Lang.Util.OMap (OMap)
+import qualified Lang.Util.OMap as OMap
+
 import Lang.Term
 import Lang.PrettyPrint
 import qualified Lang.Term.Parser as Parser
@@ -587,7 +590,7 @@ rcCong from to [] ty = (from, to, id)
 rcCong from to location ty =
     (from', to', \t -> foldl App (Named "cong") $ [ty, ty, rcExprTerm from', rcExprTerm to', congF, t])
   where
-    congF = lamBinders ["a"] $ subExprRemove "a" location from
+    congF = lamBinders ["rc-cong-var"] $ subExprRemove "rc-cong-var" location from
     from' = subExpr location from
     to' = subExpr location to
 
@@ -647,7 +650,7 @@ pullout t ty = do
     random <- liftIO $ gensym
     alpha <- T.pack <$> Lang.TypeChecker.Monad.count
     let name = T.concat ["wmLemma", alpha, random]
-    putCtx (Ctx bs (Map.insert name (pt, pty) fs))
+    putCtx (Ctx bs (OMap.insert name (pt, pty) fs))
     let vars = map (Unnamed . uncurry DB . second toText) $ reverse (zip [0..] (map fst bs))
     return (foldl App (Named name) vars)
 
