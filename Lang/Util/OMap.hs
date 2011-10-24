@@ -12,7 +12,7 @@ data OMap k a = OM Integer (Map k (Integer, a)) deriving (Show)
 empty = OM 0 Map.empty
 
 (!) :: Ord k => OMap k a -> k -> a
-(OM n m) ! k = snd (m Map.! k)
+(OM _ m) ! k = snd (m Map.! k)
 
 null :: OMap k a -> Bool
 null (OM _ m) = Map.null m

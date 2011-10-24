@@ -234,11 +234,11 @@ implIntro = Impl { implName = "intro"
                  }
 
 normalize :: [Expr] -> Opts -> TopLevel ()
-normalize _ _ = return ()
 normalize [ExprIdent ident] _ = do
     ctx <- getCtx
     normalForm <- tlnf ctx (Named ident)
     prettyPrint normalForm
+normalize _ _ = return ()
 
 implNormalize :: CommandImpl
 implNormalize = Impl { implName = "normalize"
