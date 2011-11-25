@@ -25,10 +25,10 @@ import Lang.TypeChecker.Monad
 -- + CCω Typing Rules                                               +
 -- +----------------------------------------------------------------+
 
-tPi Star Star = Star
-tPi (Box n) Star = Star
-tPi Star (Box n) = Box n
-tPi (Box n) (Box m) = Box (max n m)
+setR Star Star = Star
+setR (Box n) Star = Star
+setR Star (Box n) = Box n
+setR (Box n) (Box m) = Box (max n m)
 
 inferCoC :: (Functor m, Monad m) => Term -> TCMT m (Maybe Term)
 inferCoC (Sort Star) = return . Just $ Sort (Box 0)
@@ -45,7 +45,7 @@ inferCoC pi@(Pi tag s t) | inf pi = do
     sType <- infer s
     si <- isSort sType
     sj <- withUnnamedVar tag s $ isSort =<< infer t
-    return . Just . Sort $ tPi si sj
+    return . Just . Sort $ setR si sj
 
 inferCoC pi@(Pi _ _ _) = __ERROR__ "inferCoC" [("pi", pi)]
                          "{pi}\npi type is not inferable"
