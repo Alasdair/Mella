@@ -34,7 +34,7 @@ agdaPreludeOnline = "http://staffwww.dcs.shef.ac.uk/people/A.Armstrong/ProveIt.a
 main :: IO ()
 main = do
     args <- getArgs
-    dir <- getAppUserDataDirectory "proveit"
+    dir <- getAppUserDataDirectory "mella"
     let preludePath = dir </> "prelude.prv"
     let agdaPreludePath = dir </> "ProveIt.agda"
 
