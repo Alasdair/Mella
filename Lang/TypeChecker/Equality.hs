@@ -1,8 +1,7 @@
 {-# LANGUAGE OverloadedStrings, CPP #-}
 
-module Lang.TypeChecker.Equality 
-    ( eqRewriteRule
-    , eqReflRule
+module Lang.TypeChecker.Equality
+    ( eqReflRule
     , eqIRule
     , eqJRule
     ) where
@@ -40,28 +39,6 @@ eqJRule = IR "Eq-J" inferJ
 
 eqIRule :: (Functor m, Monad m) => IRule m
 eqIRule = IR "Eq-Infer" inferId
-
-eqRewrite :: (Functor m, Monad m) => Term -> Term -> TCMT m Bool
-eqRewrite (Rewrite dir eq t) ty | inf eq = do
-    validType ty
-    (Ctx bs _) <- getCtx
-    eqTy <- infer eq
-    case eqTy of
-      (Id _ (Unnamed i1) (Unnamed i2)) ->
-          let t' = if dir == LTR
-                   then subst (dbInt i1) (Unnamed i2) t
-                   else subst (dbInt i2) (Unnamed i1) t
-              ty' = if dir == LTR
-                    then subst (dbInt i1) (Unnamed i2) ty
-                    else subst (dbInt i2) (Unnamed i1) ty
-          in do withSubstCtx (dbInt i1) (Unnamed i2) $ t' `hasType` ty'
-                return True
-      otherwise -> __ERROR__ "eqRewrite" [("e", eqTy)] "equality not rewriteable\n{e}"
-
-eqRewrite _ _ = return False
-
-eqRewriteRule :: (Functor m, Monad m) => TCRule m
-eqRewriteRule = TCR "Eq-Rewrite" eqRewrite
 
 eqRefl :: (Functor m, Monad m) => Term -> Term -> TCMT m Bool
 eqRefl Refl eq  = do

@@ -39,7 +39,7 @@ loop :: TopLevel ()
 loop = do
     prompt <- maybe "λ" (`T.append` " λ") . fmap fst . tlCurrentTheorem <$> getState
     (Counter n) <- getCounter
-    let prompt' = "PROVEIT" -- T.append (T.pack (show n ++ " ")) prompt
+    let prompt' = "MELLA" -- T.append (T.pack (show n ++ " ")) prompt
     sch <- getColorScheme
     command <- getText sch prompt'
     when (command == "") loop

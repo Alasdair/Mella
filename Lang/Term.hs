@@ -34,8 +34,6 @@ instance Eq Index where
 
 data Sort = Star | Box Word deriving (Show, Eq)
 
-data Direction = LTR | RTL deriving (Show, Eq)
-
 data Term = Sort Sort
           | Unnamed Index
           | Named Text
@@ -45,7 +43,6 @@ data Term = Sort Sort
           | J Term Term Term Term Term Term
           | Id Term Term Term
           | Lam Tag Term
-          | Rewrite Direction Term Term
           | Refl
           | Meta Int
           deriving (Eq, Show)
@@ -82,7 +79,6 @@ inf (Ann _ _) = True
 inf (App f x) = inf f
 inf (Id _ _ _) = True
 inf (Lam _ _) = False
-inf (Rewrite _ _ _) = False
 inf Refl = False
 inf (J _ _ _ _ _ _) = True
 inf (Meta _)  = False
@@ -95,7 +91,6 @@ cata n f (Ann t ty) = f n $ Ann (cata n f t) (cata n f ty)
 cata n f (App g x) = f n $ App (cata n f g) (cata n f x)
 cata n f (Id ty t1 t2) = f n $ Id (cata n f ty) (cata n f t1) (cata n f t2)
 cata n f (Lam tag expr) = f n $ Lam tag (cata (n + 1) f expr)
-cata n f (Rewrite dir eq t) = f n $ Rewrite dir (cata n f eq) (cata n f t)
 cata n f x = f n x
 
 unsafeNF :: Ctx -> Term -> Term
@@ -105,7 +100,6 @@ nf :: Ctx -> Term -> Either Text Term
 nf ctx (J a b c d e f)    = return $ App c d
 nf ctx (Id ty t1 t2)      = liftA3 Id (nf ctx ty) (nf ctx t1) (nf ctx t2)
 nf ctx (Ann t ty)         = nf ctx t
-nf ctx (Rewrite dir eq t) = liftA2 (Rewrite dir) (nf ctx eq) (nf ctx t)
 nf ctx (Named name)       = nf ctx =<< maybe (Left name) Right (fst <$> OMap.lookup name (named ctx))
 nf ctx (Lam tag t)        = Lam tag <$> nf ctx t
 nf ctx (Pi tag s t)       = liftA2 (Pi tag) (nf ctx s) (nf ctx t)
@@ -132,14 +126,12 @@ shift d c (Pi tag s t)        = Pi tag (shift d c s) (shift d (c + 1) t)
 shift d c (App f x)           = App (shift d c f) (shift d c x)
 shift d c (Ann t ty)          = Ann (shift d c t) (shift d c ty)
 shift d c (Id ty a b)         = Id (shift d c ty) (shift d c a) (shift d c b)
-shift d c (Rewrite dir eq t)  = Rewrite dir (shift d c eq) (shift d c t)
 shift d c x                   = x
 
 subst :: Int -> Term -> Term -> Term
 subst n x (Unnamed m)
   | n == dbInt m             = x
 subst n x (Lam tag f)        = Lam tag $ subst (n + 1) (shift 1 0 x) f
-subst n x (Rewrite dir eq t) = Rewrite dir (subst n x eq) $ subst n x t
 subst n x (Pi tag s t)       = Pi tag (subst n x s) (subst (n + 1) (shift 1 0 x) t)
 subst n x (Ann t1 t2)        = Ann (subst n x t1) (subst n x t2)
 subst n x (App t1 t2)        = App (subst n x t1) (subst n x t2)
@@ -171,9 +163,6 @@ assignVars' ctx xs (Id ty t1 t2) =
 assignVars' ctx xs (App t1 t2) =
     App (assignVars' ctx xs t1) (assignVars' ctx xs t2)
 
-assignVars' ctx xs (Rewrite dir eq t) =
-    Rewrite dir (assignVars' ctx xs eq) (assignVars' ctx xs t)
-
 assignVars' ctx xs (J a b c d e f) = J (assignVars' ctx xs a) (assignVars' ctx xs b)
                                        (assignVars' ctx xs c) (assignVars' ctx xs d)
                                        (assignVars' ctx xs e) (assignVars' ctx xs f)
@@ -196,7 +185,6 @@ fixNames' m ctx (Lam tag expr)     = Lam tag (fixNames' (m + 1) ctx expr)
 fixNames' m ctx (Pi tag s t)       = Pi tag (fixNames' m ctx s) (fixNames' (m + 1) ctx t)
 fixNames' m ctx (App t1 t2)        = App (fixNames' m ctx t1) (fixNames' m ctx t2)
 fixNames' m ctx (Id ty t1 t2)      = Id (fixNames' m ctx ty) (fixNames' m ctx t1) (fixNames' m ctx t2)
-fixNames' m ctx (Rewrite dir eq t) = Rewrite dir (fixNames' m ctx eq) (fixNames' m ctx t)
 fixNames' m ctx (Ann t1 t2)        = Ann (fixNames' m ctx t1) (fixNames' m ctx t2)
 fixNames' m ctx (J a b c d e f)    = J (fixNames' m ctx a) (fixNames' m ctx b) (fixNames' m ctx c)
                                        (fixNames' m ctx d) (fixNames' m ctx e) (fixNames' m ctx f)
@@ -209,13 +197,11 @@ numberMetas (Lam tag t)        = Lam tag <$> numberMetas t
 numberMetas (Ann t ty)         = liftA2 Ann (numberMetas t) (numberMetas ty)
 numberMetas (App f x)          = liftA2 App (numberMetas f) (numberMetas x)
 numberMetas (Id ty t1 t2)      = liftA3 Id (numberMetas ty) (numberMetas t1) (numberMetas t2)
-numberMetas (Rewrite dir eq t) = liftA2 (Rewrite dir) (numberMetas eq) (numberMetas t)
 numberMetas x                  = pure x
 
 reconstructMeta :: Map Int Term -> Term -> Term
 reconstructMeta m (Meta n)           = reconstructMeta m (Map.findWithDefault (Meta n) n m)
 reconstructMeta m (Lam tag f)        = Lam tag $ reconstructMeta m f
-reconstructMeta m (Rewrite dir eq t) = Rewrite dir (reconstructMeta m eq) $ reconstructMeta m t
 reconstructMeta m (Pi tag s t)       = Pi tag (reconstructMeta m s) (reconstructMeta m t)
 reconstructMeta m (Ann t1 t2)        = Ann (reconstructMeta m t1) (reconstructMeta m t1)
 reconstructMeta m (App t1 t2)        = App (reconstructMeta m t1) (reconstructMeta m t2)
@@ -248,10 +234,6 @@ instance PrettyPrint Index where
 instance PrettyPrint Tag where
     pretty sch (Tag t) = withColor sch unnamedColor t
 
-instance PrettyPrint Direction where
-    pretty sch RTL = withColor sch keywordColor "rtl"
-    pretty sch LTR = withColor sch keywordColor "ltr"
-
 instance PrettyPrint Sort where
     pretty sch Star = withColor sch sortColor "*"
     pretty sch (Box n) = withColor sch sortColor $ T.append "□ " (T.pack (show n))
@@ -278,12 +260,6 @@ instance PrettyPrint Term where
                                          , " → "
                                          , pretty sch expr
                                          ]
-
-    pretty sch (Rewrite dir eq t) = T.concat [ withColor sch keywordColor "rewrite "
-                                             , pretty sch dir
-                                             , " ", prettyBracket sch eq
-                                             , " ", prettyBracket sch t
-                                             ]
 
     pretty sch (J a b c d e f) = T.concat [ withColor sch keywordColor "elimJ "
                                           , prettyBracket sch a, " ", prettyBracket sch b, " ", prettyBracket sch c, " "

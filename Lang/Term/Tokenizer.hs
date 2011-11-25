@@ -23,7 +23,6 @@ data Token = TokArrow
            | TokOpenBracket
            | TokCloseBracket
            | TokIdentifier Text
-           | TokRewrite Direction
            | TokHasType
            | TokId
            | TokJ
@@ -62,7 +61,7 @@ illegalChars :: [Char]
 illegalChars = ['(', ')', '"', '.', ';', '{', '}']
 
 ident :: Parser Text
-ident = do 
+ident = do
     t <- Atto.takeWhile1 (flip notElem (whitespace ++ illegalChars))
     when (elem t reservedWords) $ fail (show t ++ " is a reserved word")
     return t
@@ -75,16 +74,6 @@ openBracket = char '(' >> return TokOpenBracket
 
 closeBracket :: Parser Token
 closeBracket = char ')' >> return TokCloseBracket
-
-rewrite :: Parser Token
-rewrite = do
-    string "rewrite"
-    skipSpace
-    dir <- direction
-    return (TokRewrite dir)
-  where
-    direction :: Parser Direction
-    direction = (string "RL" >> return RTL) <|> (string "LR" >> return LTR)
 
 hasType :: Parser Token
 hasType = char ':' >> return TokHasType
@@ -127,7 +116,6 @@ token = arrow
         <|> openBracket
         <|> closeBracket
         <|> identifier
-        <|> rewrite
         <|> annotate
         <|> hasType
         <|> identity

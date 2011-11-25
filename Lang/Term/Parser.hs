@@ -32,7 +32,6 @@ desugar SNat = undefined
 desugar (SAnnotate t ty) = Ann (desugar t) (desugar ty)
 desugar (SSort s) = Sort s
 desugar SMeta = Meta 0
-desugar (SRewrite dir eq t) = Rewrite dir (desugar eq) (desugar t)
 desugar (STySig args s t) = foldr (\tag t -> (Pi tag (desugar s) t)) (desugar t) (map Tag args)
 
 -- | parse a Term within the provided Ctx.

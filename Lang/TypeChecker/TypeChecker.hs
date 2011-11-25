@@ -30,7 +30,7 @@ tRules :: (Functor m, Monad m) => [TCRule m]
 tRules = metaMetaRule : tRulesNoMeta
 
 tRulesNoMeta :: (Functor m, Monad m) => [TCRule m]
-tRulesNoMeta = [tAbsRule, tInfRule, eqReflRule, eqRewriteRule]
+tRulesNoMeta = [ tAbsRule, tInfRule, eqReflRule ]
 
 iRules :: (Functor m, Monad m) => [IRule m]
 iRules = [ tInfIRule, eqIRule, eqJRule ]

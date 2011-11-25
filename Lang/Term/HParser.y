@@ -29,7 +29,6 @@ import Lang.Term.Tokenizer
       '('            { TokOpenBracket }
       ')'            { TokCloseBracket }
       ident          { TokIdentifier $$ }
-      rewrite        { TokRewrite $$ }
       ':'            { TokHasType }
       id             { TokId }
       axiomJ         { TokJ }
@@ -50,7 +49,6 @@ TermB : TySig                 { $1 }
 
 TermBNT :: { SugarTerm }
 TermBNT : App               { $1 }
-        | rewrite Term Term { SRewrite $1 $2 $3 }
         | id Term Term Term { SId $2 $3 $4 }
         | TermNB            { $1 }
         | Term '::' Term    { SAnnotate $1 $3 }
@@ -101,7 +99,6 @@ data SugarTerm = SLam [Text] SugarTerm
                | SNat
                | SAnnotate SugarTerm SugarTerm
                | SSort Sort
-               | SRewrite Direction SugarTerm SugarTerm
                | SMeta
                deriving (Show)
 
