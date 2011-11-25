@@ -26,16 +26,16 @@ flags = [ Option "p" ["proof-general"] (NoArg ProofGeneral)
         ]
 
 preludeOnline :: String
-preludeOnline = "http://staffwww.dcs.shef.ac.uk/people/A.Armstrong/prelude.prv"
+preludeOnline = "http://staffwww.dcs.shef.ac.uk/people/A.Armstrong/prelude.mel"
 
 agdaPreludeOnline :: String
-agdaPreludeOnline = "http://staffwww.dcs.shef.ac.uk/people/A.Armstrong/ProveIt.agda"
+agdaPreludeOnline = "http://staffwww.dcs.shef.ac.uk/people/A.Armstrong/Mella.agda"
 
 main :: IO ()
 main = do
     args <- getArgs
     dir <- getAppUserDataDirectory "mella"
-    let preludePath = dir </> "prelude.prv"
+    let preludePath = dir </> "prelude.mel"
     let agdaPreludePath = dir </> "ProveIt.agda"
 
     preludeExist <- doesFileExist preludePath
