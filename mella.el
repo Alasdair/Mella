@@ -1,4 +1,4 @@
-;;; Basic Proof General Support for ProveIt.
+;;; Basic Proof General Support for Mella.
 
 ;;; From demoisa.el, but seems unneccessary.
 ;;(eval-and-compile

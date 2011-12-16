@@ -36,7 +36,7 @@ main = do
     args <- getArgs
     dir <- getAppUserDataDirectory "mella"
     let preludePath = dir </> "prelude.mel"
-    let agdaPreludePath = dir </> "ProveIt.agda"
+    let agdaPreludePath = dir </> "Mella.agda"
 
     preludeExist <- doesFileExist preludePath
     agdaPreludeExist <- doesFileExist agdaPreludePath
