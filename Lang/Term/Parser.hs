@@ -3,6 +3,7 @@ module Lang.Term.Parser
     , assignVars
     ) where
 
+import Control.Applicative ((<$>))
 import Control.Arrow ((<<<))
 
 import Data.Maybe (fromJust)
@@ -13,6 +14,7 @@ import qualified Data.Text as T
 
 import Lang.Error
 import Lang.Term
+{-
 import Lang.Term.HParser
 import Lang.Term.Tokenizer
 
@@ -40,3 +42,8 @@ parseTerm ctx t = tokenize t >>= sugarParse >>= return . assignVars ctx . desuga
 
 instance IsString Term where
     fromString = fromError . parseTerm emptyCtx . T.pack
+-}
+
+import qualified Lang.Term.MParser as M
+
+parseTerm ctx t = assignVars ctx <$> M.parseTerm M.termB ctx M.testOps t

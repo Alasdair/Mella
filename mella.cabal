@@ -16,7 +16,8 @@ Executable mella
     Lang.PrettyPrint,
     Lang.Tactic.Waldmeister,
     Lang.Term,
-    Lang.Term.HParser,
+    Lang.Term.MParser,
+    Lang.Term.Mixfix
     Lang.Term.Parser,
     Lang.Term.Tokenizer,
     Lang.TopLevel,
@@ -41,16 +42,15 @@ Executable mella
   Build-Depends:
     base >= 3 && < 5,
     text == 0.11.*,
-    time == 1.2.*,
+    time >= 0,
     ansi-terminal == 0.5.*,
     transformers == 0.2.*,
     containers == 0.4.*,
-    attoparsec == 0.9.*,
-    attoparsec-text == 0.8.*,
-    haskeline == 0.6.*,
+    attoparsec == 0.10.*,
     random == 1.*,
     process == 1.*,
     directory == 1.*,
-    array == 0.3.*,
+    array == 0.4.*,
     filepath == 1.2.*,
-    http-wget == 0.6.*
+    http-wget == 0.6.*,
+    parsec == 3.1.*

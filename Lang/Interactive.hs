@@ -10,7 +10,8 @@ import Data.Text (Text)
 import qualified Data.Text as T
 import qualified Data.Text.IO as T
 
-import System.Console.Haskeline
+--import System.Console.Haskeline
+import System.IO (hFlush, stdout)
 
 import Lang.Error
 import Lang.Term
@@ -18,6 +19,15 @@ import Lang.Term.Parser as Parser
 import Lang.TopLevel.Parser as Parser
 import Lang.PrettyPrint
 
+-- Haskeline currently won't build properly with ghc-7.4.
+getText :: MonadIO m => ColorScheme -> Text -> m Text
+getText _ prompt = liftIO $ do
+    T.putStr prompt
+    T.putStr "> "
+    hFlush stdout
+    T.getLine
+
+{-
 getText :: MonadIO m => ColorScheme -> Text -> m Text
 getText sch prompt =
     liftIO $ runInputT defaultSettings (getTerm' (T.unpack prompt))
@@ -28,3 +38,4 @@ getText sch prompt =
                                              , "> "
                                              ])
         return (T.pack input)
+-}

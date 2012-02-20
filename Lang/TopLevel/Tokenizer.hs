@@ -92,7 +92,7 @@ token = fun
 
 tokenize' :: Parser [Token]
 tokenize' = do
-    toks <- Atto.many (skipSpace >> token)
+    toks <- many (skipSpace >> token)
     skipSpace
     endOfInput
     return toks

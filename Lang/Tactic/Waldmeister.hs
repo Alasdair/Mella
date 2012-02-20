@@ -352,12 +352,12 @@ parseTheorem = do{ h <- parseTheoremHead
                  ; spaces
                  ; parseWMExpr
                  ; spaces
-                 ; rs <- Atto.many $ do{ a <- parseAppli
-                                       ; spaces
-                                       ; e <- parseWMExpr
-                                       ; spaces
-                                       ; return (a,e)
-                                       }
+                 ; rs <- many $ do{ a <- parseAppli
+                                  ; spaces
+                                  ; e <- parseWMExpr
+                                  ; spaces
+                                  ; return (a,e)
+                                  }
                  ; return $ Lemma h rs
                  } <?> "parseTheorem"
 
@@ -366,12 +366,12 @@ parseLemma = do{ h <- parseLemmaHead
                ; spaces
                ; parseWMExpr
                ; spaces
-               ; rs <- Atto.many $ do{ a <- parseAppli
-                                     ; spaces
-                                     ; e <- parseWMExpr
-                                     ; spaces
-                                     ; return (a,e)
-                                     }
+               ; rs <- many $ do { a <- parseAppli
+                                 ; spaces
+                                 ; e <- parseWMExpr
+                                 ; spaces
+                                 ; return (a,e)
+                                 }
                ; return $ Lemma h rs
                } <?> "parseLemma"
 
@@ -438,7 +438,7 @@ parseAppli = do{ char '='
 parseWMProof :: Parser WMProof
 parseWMProof = do{ string "Consider the following set of axioms:"
                  ; spaces
-                 ; as <- Atto.many parseAxiom
+                 ; as <- many parseAxiom
                  ; spaces
                  ; string "This theorem holds true:"
                  ; spaces
@@ -446,7 +446,7 @@ parseWMProof = do{ string "Consider the following set of axioms:"
                  ; spaces
                  ; string "Proof:"
                  ; spaces
-                 ; ls <- Atto.many parseLemma
+                 ; ls <- many parseLemma
                  ; spaces
                  ; t <- parseTheorem
                  ; return (WMProof as ls t)

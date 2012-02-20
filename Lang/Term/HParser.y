@@ -1,7 +1,7 @@
 {
 {-# LANGUAGE OverloadedStrings #-}
 
-module Lang.Term.HParser 
+module Lang.Term.HParser
     ( sugarParse
     , sugarParseVarList
     , SugarTerm (..)
@@ -54,14 +54,13 @@ TermBNT : App               { $1 }
         | Term '::' Term    { SAnnotate $1 $3 }
         | '(' TermB ')'     { $2 }
 
-TermNB :: { SugarTerm }
-TermNB : ident   { SVar $1 }
-       | nat     { SNatLiteral $1 }
-       | natType { SNat }
-       | sort    { SSort $1 }
-       | '?'     { SMeta }
-       | AxiomJ  { $1 }
-       | refl    { SRefl }
+atom :: { SugarTerm }
+atom : ident   { SVar $1 }
+     | nat     { SNatLiteral $1 }
+     | natType { SNat }
+     | sort    { SSort $1 }
+     | '?'     { SMeta }
+     | refl    { SRefl }
 
 AxiomJ :: { SugarTerm }
 AxiomJ : axiomJ Term Term Term Term Term Term { SJ $2 $3 $4 $5 $6 $7 }

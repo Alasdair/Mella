@@ -115,6 +115,8 @@ betaReduce ctx (App f x)
   | nf ctx f /= Right f           = betaReduce ctx =<< flip App x <$> nf ctx f
 betaReduce ctx x                  = Right Nothing
 
+-- TODO: Normalization needs worked on.
+
 -- | 'shift' renumbers the indices of free variables within terms.
 -- @shift d c t@ is the d-place shift of a term t above cutoff c
 shift :: Int -> Int -> Term -> Term
