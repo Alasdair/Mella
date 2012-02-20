@@ -10,7 +10,7 @@ import qualified Data.Text as T
 import Data.Attoparsec.Text as Atto hiding (skipSpace)
 import Data.Attoparsec.Combinator as Atto
 
-import Lang.Term.Tokenizer (ident)
+import Lang.Term.Identifier (ident)
 
 data Token = TokFun
            | TokTheorem

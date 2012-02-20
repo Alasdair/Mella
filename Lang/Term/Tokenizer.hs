@@ -1,11 +1,13 @@
-{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE OverloadedStrings, DeriveDataTypeable #-}
 
-module Lang.Term.Tokenizer where
+module Lang.Term.Tokenizer
+    ( Token (..)
+    , tokenize
+    ) where
 
 import Control.Applicative
-import Control.Monad
 
-import Data.Char
+import qualified Data.Char as Char
 import Data.List (foldl')
 import Data.Word
 
@@ -15,6 +17,8 @@ import Data.Attoparsec.Text as Atto
 import Data.Attoparsec.Combinator as Atto
 
 import Lang.Term
+import Lang.Term.Identifier
+import Lang.Term.Operator
 import Lang.Error
 import Lang.PrettyPrint
 
@@ -22,29 +26,19 @@ data Token = TokArrow
            | TokLambda
            | TokOpenBracket
            | TokCloseBracket
-           | TokIdentifier Text
+           | TokOpenType
+           | TokCloseType
+           | TokIdentifier { unIdent :: Text }
            | TokHasType
            | TokId
            | TokJ
            | TokRefl
-           | TokNat
-           | TokNumeric Int
-           | TokSort Sort
+           | TokSortBox { unBox :: Word }
+           | TokSortStar
            | TokAnnotate
            | TokMeta
-           deriving (Show)
-
-int :: Parser Int
-int = do
-    d <- map digitToInt <$> many1 (satisfy isDigit)
-    return $ foldl' (\n m -> n * 10 + m) 0 d
-
-word :: Parser Word
-word = do
-    d <- map (read . pure) <$> many1 (satisfy isDigit)
-    return $ foldl' (\n m -> n * 10 + m) 0 d
-
-whitespace = [' ', '\t', '\n']
+           | TokNamePart { unNamePart :: Text }
+           deriving (Show, Eq, Ord)
 
 arrow :: Parser Token
 arrow = (string "→" <|> string "->") >> return TokArrow
@@ -52,22 +46,12 @@ arrow = (string "→" <|> string "->") >> return TokArrow
 lambda :: Parser Token
 lambda = (char 'λ' <|> char '\\') >> return TokLambda
 
-reservedWords = [ "\\", "λ", "Box", "□", "*", "."
-                , "->", "→", "ℕ", "Nat", "?", "refl"
-                , "suc", "zero", "rewrite", "ltr"
-                , "rtl", "Id", ":", "::", "elimJ" ]
-
-illegalChars :: [Char]
-illegalChars = ['(', ')', '"', '.', ';', '{', '}']
-
-ident :: Parser Text
-ident = do
-    t <- Atto.takeWhile1 (flip notElem (whitespace ++ illegalChars))
-    when (elem t reservedWords) $ fail (show t ++ " is a reserved word")
-    return t
-
-identifier :: Parser Token
-identifier = TokIdentifier <$> ident
+identifier :: [Operator] -> Parser Token
+identifier ops = do
+    i <- ident
+    return $ if i `elem` (nameParts =<< ops)
+             then TokNamePart i
+             else TokIdentifier i
 
 openBracket :: Parser Token
 openBracket = char '(' >> return TokOpenBracket
@@ -87,21 +71,18 @@ axiomJ = string "elimJ" >> return TokJ
 refl :: Parser Token
 refl = string "refl" >> return TokRefl
 
-nat :: Parser Token
-nat = (string "Nat" <|> string "ℕ") >> return TokNat
-
-numeric :: Parser Token
-numeric = int >>= return . TokNumeric
+word :: Parser Word
+word = do
+    d <- map (read . pure) <$> many1 (satisfy Char.isDigit)
+    return $ foldl' (\n m -> n * 10 + m) 0 d
 
 box :: Parser Token
 box = do
     (string "□" <|> string "Box")
-    skipSpace
-    w <- word
-    return (TokSort (Box w))
+    TokSortBox <$> word
 
 star :: Parser Token
-star = char '*' >> return (TokSort Star)
+star = char '*' >> return TokSortStar
 
 annotate :: Parser Token
 annotate = string "::" >> return TokAnnotate
@@ -109,28 +90,25 @@ annotate = string "::" >> return TokAnnotate
 meta :: Parser Token
 meta = char '?' >> return TokMeta
 
-token :: Parser Token
-token = arrow
+token :: [Operator] -> Parser Token
+token ops = arrow
         <|> lambda
         <|> axiomJ
         <|> openBracket
         <|> closeBracket
-        <|> identifier
+        <|> box
+        <|> identifier ops
         <|> annotate
         <|> hasType
         <|> identity
         <|> refl
-        <|> nat
-        <|> numeric
-        <|> box
         <|> star
         <|> meta
 
-tokenize' :: Parser [Token]
-tokenize' = do
-    toks <- many (skipSpace >> token)
-    skipSpace
-    endOfInput
+tokenize' :: [Operator] -> Parser [Token]
+tokenize' ops = do
+    toks <- many (skipSpace >> token ops)
+    skipSpace >> endOfInput
     return toks
 
 data TokenizerError = TErr Text Text
@@ -144,9 +122,24 @@ instance ErrorMsg TokenizerError where
                  , remaining
                  ]
 
-tokenize :: Text -> Error [Token]
-tokenize t =
-    case flip feed "" $ Atto.parse tokenize' t of
-      (Done _ t') -> return t'
+tokenize :: [Operator] -> Text -> Error [Token]
+tokenize ops t =
+    case flip feed "" $ Atto.parse (tokenize' ops) t of
+      (Done _ t') -> return (fixBrackets [] t')
       (Fail remaining _ err) -> throwError (TErr remaining (T.pack err))
       (Partial _) -> throwError (TErr "Tokenizer demanding more input." "N/A")
+
+
+fixBrackets :: [Char] -> [Token] -> [Token]
+fixBrackets stack tokens = case (stack, tokens) of
+    (_, TokOpenBracket : toks) -> if isTypeBracket toks
+                                  then TokOpenType : fixBrackets ('{' : stack) toks
+                                  else TokOpenBracket : fixBrackets ('(' : stack) toks
+    ('(' : s, TokCloseBracket : toks) -> TokCloseBracket : fixBrackets s toks
+    ('{' : s, TokCloseBracket : toks) -> TokCloseType : fixBrackets s toks
+    (_, t : toks) -> t : fixBrackets stack toks
+    (_, []) -> []
+  where
+    isTypeBracket ((TokIdentifier _) : toks) = isTypeBracket toks
+    isTypeBracket (TokHasType : toks) = True
+    isTypeBracket _ = False

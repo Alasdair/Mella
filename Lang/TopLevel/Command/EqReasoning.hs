@@ -16,7 +16,7 @@ import qualified Data.Text.IO as T
 import qualified Data.Attoparsec.Text as Atto
 import qualified Data.Attoparsec.Combinator as Atto
 
-import qualified Lang.Term.Tokenizer as Tokenizer
+import qualified Lang.Term.Identifier as Identifier
 import Lang.PrettyPrint
 import Lang.TopLevel.Parser
 import Lang.TopLevel.Monad
@@ -27,20 +27,20 @@ eqCommands :: Map Text CommandImpl
 eqCommands = commandsFromList [ implEq ]
 
 parseEqExpr'' :: Atto.Parser EqExpr
-parseEqExpr'' = do { v <- Tokenizer.ident
+parseEqExpr'' = do { v <- Identifier.ident
                    ; Atto.skipSpace
                    ; return (EqExpr v [])
                    }
                 <|>
                 do { Atto.char '('
-                   ; f <- Tokenizer.ident
+                   ; f <- Identifier.ident
                    ; Atto.skipSpace
                    ; args <- Atto.many1 parseEqExpr''
                    ; Atto.char ')'
                    ; return (EqExpr f args)
                    }
 
-parseEqExpr' = do { f <- Tokenizer.ident
+parseEqExpr' = do { f <- Identifier.ident
                   ; Atto.skipSpace
                   ; args <- Atto.many1 parseEqExpr''
                   ; return (EqExpr f args)

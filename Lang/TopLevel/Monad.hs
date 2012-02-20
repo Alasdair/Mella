@@ -460,7 +460,7 @@ withCounter f x = do
 
 parseTerm :: Ctx -> Text -> TopLevel Term
 parseTerm ctx termText = do
-    term <- try $ Parser.parseTerm ctx termText
+    term <- try $ Parser.parseTerm ctx [] termText
     withCounter numberMetas term
 
 tlnf :: Ctx -> Term -> TopLevel Term

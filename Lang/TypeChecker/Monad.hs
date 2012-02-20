@@ -278,12 +278,12 @@ outputDesc sch desc terms =
 assign :: (Functor m, Monad m) => Term -> TCMT m Term
 assign t = do
     ctx <- getCtx
-    return $ Parser.assignVars ctx t
+    return $ assignVars ctx t
 
 parseTerm :: (Functor m, Monad m) => Text -> TCMT m Term
 parseTerm t = do
     ctx <- getCtx
-    let res = runError defaultScheme $ Parser.parseTerm ctx t
+    let res = runError defaultScheme $ Parser.parseTerm ctx [] t
     case res of
       Right term -> return term
       Left e -> __ERROR__ "parseTerm" [] e
